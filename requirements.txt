@@ -1,0 +1,4 @@
+PyQt5~=5.15.9
+Pillow~=9.2.0
+pip~=22.3
+setuptools~=65.5.0
