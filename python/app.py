@@ -160,7 +160,7 @@ class App(QMainWindow):
         self.bg_color = ncolor
         self.btn_bg_color.setStyleSheet(f"background-color: #{hex(self.bg_color.rgb()).upper()[2:]}; color: {'black' if self.bg_color.lightness() > 123 else 'white'}")
         self.draw()
-        self.draw()
+        self.draw()     # why 2? I do not know.
 
     def updateQrColor(self):
         ncolor = QColorDialog.getColor(self.bg_color, self, "QR Code Color")
@@ -172,7 +172,7 @@ class App(QMainWindow):
         print(f"#{hex(self.bg_color.rgb()).upper()[2:]}")
         self.btn_qr_color.setStyleSheet(f"background-color: #{hex(self.qr_color.rgb()).upper()[2:]}; color: {'black' if self.qr_color.lightness() > 123 else 'white'}")
         self.draw()
-        self.draw()
+        self.draw()     # why 2? I do not know.
 
     def updateECC(self, new_value: str):
         if new_value == "LOW":
