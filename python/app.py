@@ -172,10 +172,10 @@ class App(QMainWindow):
 
     def saveImage(self):
         if not self.filename:
-            msg = QMessageBox.warning(self, "No template selected", "You must first select a template.")
+            QMessageBox.warning(self, "No template selected", "You must first select a template.")
             return
         if not self.input_url.text():
-            msg = QMessageBox.warning(self, "No URL given", "You must first specify a URL to convert.")
+            QMessageBox.warning(self, "No URL given", "You must first specify a URL to convert.")
             return
         target, _ = QFileDialog.getSaveFileName(self, 'Save File', QDir.homePath(), '*.png')
         if not target:
@@ -233,11 +233,13 @@ class App(QMainWindow):
         self.draw()
 
     def saveConfig(self):
-        os.makedirs("./data/configs/")
+        os.makedirs("./data/configs/", exist_ok=True)
         if not self.filename:
-            msg = QMessageBox.warning(self, "Invalid config", "Config file must contain path to a file")
+            QMessageBox.warning(self, "Invalid config", "Config file must contain path to a file")
             return
         target, _ = QFileDialog.getSaveFileName(self, 'Save Config', './data/configs', 'Config file (*.qrconfig)')
+        if not target:
+            return
         conf = dict()
         conf["image"] = self.filename
         conf["size"] = self.qrcode_size.getValue()
