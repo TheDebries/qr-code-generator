@@ -208,7 +208,6 @@ class App(QMainWindow):
         y0 = int((self.qrcode_offset_y.getValue() / self.img_height) * self.preview.height())
 
         d = int((self.qrcode_size.getValue() * self.preview.width()) / (self.img_width * self.qrcode.get_size()))
-        print(f"{self.img_width} -- {self.preview.width()}")
         for x in range(self.qrcode.get_size()):
             for y in range(self.qrcode.get_size()):
                 if self.qrcode.get_module(x, y):
@@ -230,6 +229,7 @@ class App(QMainWindow):
                 self.qrcode_offset_x.lineEdit.setText(str(int(qrconf["dx"])))
             if "dy" in qrconf:
                 self.qrcode_offset_y.lineEdit.setText(str(int(qrconf["dy"])))
+        self.generateQrCode()
         self.draw()
 
     def saveConfig(self):
