@@ -10,7 +10,7 @@ from PyQt5.QtWidgets import \
     QGridLayout, \
     QLabel, \
     QHBoxLayout, \
-    QVBoxLayout, QMessageBox, QComboBox
+    QVBoxLayout, QMessageBox, QComboBox, QCheckBox, QColorDialog
 
 from PyQt5.QtCore import \
     Qt, \
@@ -20,7 +20,7 @@ from PyQt5.QtGui import \
     QPixmap, \
     QPainter, \
     QBrush, \
-    QIcon
+    QIcon, QColor, QIntValidator, QPen
 
 from qrcodegen import QrCode
 
@@ -107,9 +107,72 @@ class App(QMainWindow):
         self.buttons_config.addWidget(self.btn_config_load)
         self.buttons_config.addWidget(self.btn_config_save)
 
+        self.bg = QLabel("Background")
+        self.check_bg = QCheckBox()
+        self.check_bg.toggled.connect(self.draw)
+        self.bg_margin_label = QLabel("Margin")
+        self.bg_margin = QLineEdit()
+        self.bg_margin_validator = QIntValidator()
+        self.bg_margin_value = 0
+        self.bg_margin.setText("0")
+        self.bg_margin.setValidator(self.bg_margin_validator)
+        self.bg_margin.textChanged.connect(self.updateBgMargin)
+
+        self.btn_bg_color = QPushButton("Set Background Color")
+        self.btn_bg_color.pressed.connect(self.updateBackgroundColor)
+        self.bg_color = None
+        self.changeBackgroundColor(QColor("white"))
+        self.btn_qr_color = QPushButton("Set QR Color")
+        self.btn_qr_color.pressed.connect(self.updateQrColor)
+        self.qr_color = None
+        self.changeQrColor(QColor("black"))
+
+        self.bg_w = QVBoxLayout(self)
+        self.bg_w1 = QHBoxLayout(self)
+        self.bg_w2 = QHBoxLayout(self)
+        self.bg_w1.addWidget(self.bg)
+        self.bg_w1.addWidget(self.check_bg)
+        self.bg_w1.addWidget(self.bg_margin_label)
+        self.bg_w1.addWidget(self.bg_margin)
+        self.bg_w2.addWidget(self.btn_bg_color)
+        self.bg_w2.addWidget(self.btn_qr_color)
+
+        self.bg_w.addLayout(self.bg_w1)
+        self.bg_w.addLayout(self.bg_w2)
+
         self.input_url.getBody().returnPressed.connect(self.draw)
         self.rects = []
         self.initUI()
+
+    def updateBgMargin(self):
+        try:
+            self.bg_margin_value = int(self.bg_margin.text())
+        except:
+            pass
+        self.draw()
+
+    def updateBackgroundColor(self):
+        ncolor = QColorDialog.getColor(self.bg_color, self, "Background Color")
+        if ncolor:
+            self.changeBackgroundColor(ncolor)
+
+    def changeBackgroundColor(self, ncolor: QColor):
+        self.bg_color = ncolor
+        self.btn_bg_color.setStyleSheet(f"background-color: #{hex(self.bg_color.rgb()).upper()[2:]}; color: {'black' if self.bg_color.lightness() > 123 else 'white'}")
+        self.draw()
+        self.draw()
+
+    def updateQrColor(self):
+        ncolor = QColorDialog.getColor(self.bg_color, self, "QR Code Color")
+        if ncolor:
+            self.changeQrColor(ncolor)
+
+    def changeQrColor(self, ncolor: QColor):
+        self.qr_color = ncolor
+        print(f"#{hex(self.bg_color.rgb()).upper()[2:]}")
+        self.btn_qr_color.setStyleSheet(f"background-color: #{hex(self.qr_color.rgb()).upper()[2:]}; color: {'black' if self.qr_color.lightness() > 123 else 'white'}")
+        self.draw()
+        self.draw()
 
     def updateECC(self, new_value: str):
         if new_value == "LOW":
@@ -158,9 +221,10 @@ class App(QMainWindow):
 
         # --- #
         self.grid.addWidget(self.preview, 1, 1, Qt.AlignCenter | Qt.AlignTop)
-        self.grid.addLayout(self.buttons, 2, 0, Qt.AlignLeft | Qt.AlignBottom)
+        self.grid.addLayout(self.bg_w, 2, 0, Qt.AlignCenter)
+        self.grid.addLayout(self.buttons, 3, 0, Qt.AlignLeft | Qt.AlignBottom)
         self.grid.addLayout(self.config_w, 1, 0, Qt.AlignLeft)
-        self.grid.addLayout(self.buttons_config, 3, 0, Qt.AlignCenter)
+        self.grid.addLayout(self.buttons_config, 4, 0, Qt.AlignCenter)
         self.grid.addLayout(self.qrcode_ecc_w, 0, 0, Qt.AlignLeft)
         self.show()
 
@@ -226,13 +290,19 @@ class App(QMainWindow):
             return
         self.pm = QPixmap(self.filename).scaled(self.preview.width(), self.preview.height(), Qt.KeepAspectRatio, Qt.SmoothTransformation)
         qrd = QPainter(self.pm)
-        qrd.setBrush(QBrush(Qt.black, Qt.SolidPattern))
+        qrd.setPen(Qt.NoPen)
         self.rects = []
 
         x0 = (self.qrcode_offset_x.getValue() / self.img_width) * self.preview.width()
         y0 = (self.qrcode_offset_y.getValue() / self.img_height) * self.preview.height()
 
         d = (self.qrcode_size.getValue() * self.preview.width()) / (self.img_width * self.qrcode.get_size())
+
+        if self.check_bg.isChecked():
+            nrect = QRectF(x0-self.bg_margin_value, y0-self.bg_margin_value, d*self.qrcode.get_size() + 2*self.bg_margin_value, d*self.qrcode.get_size() + 2*self.bg_margin_value)
+            qrd.setBrush(QBrush(self.bg_color, Qt.SolidPattern))
+            qrd.drawRect(nrect)
+        qrd.setBrush(QBrush(self.qr_color))
         for x in range(self.qrcode.get_size()):
             for y in range(self.qrcode.get_size()):
                 if self.qrcode.get_module(x, y):
