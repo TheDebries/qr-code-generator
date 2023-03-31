@@ -112,7 +112,6 @@ class App(QMainWindow):
         self.initUI()
 
     def updateECC(self, new_value: str):
-        print("IM CALLED")
         if new_value == "LOW":
             self.ecc = QrCode.Ecc.LOW
         elif new_value == "MEDIUM":
@@ -267,7 +266,7 @@ class App(QMainWindow):
         if not target:
             return
         conf = dict()
-        conf["image"] = self.filename
+        conf["image"] = os.path.relpath(self.filename)
         conf["size"] = self.qrcode_size.getValue()
         conf["dx"] = self.qrcode_offset_x.getValue()
         conf["dy"] = self.qrcode_offset_y.getValue()
