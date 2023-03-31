@@ -26,7 +26,7 @@ def print_qr(qrcode: QrCode) -> None:
 def to_image(qrcode: QrCode, filename: str, template: str, size: int, corner_x: int, corner_y: int) -> None:
     img = Image.open(template).convert("RGBA")
     dr = ImageDraw.Draw(img)
-    dpixel = floor(size / qrcode.get_size())
+    dpixel = size / qrcode.get_size()
 
     def to_rectangle(x, y):
         xb = corner_x + dpixel * x

@@ -10,11 +10,11 @@ from PyQt5.QtWidgets import \
     QGridLayout, \
     QLabel, \
     QHBoxLayout, \
-    QVBoxLayout, QMessageBox
+    QVBoxLayout, QMessageBox, QComboBox
 
 from PyQt5.QtCore import \
     Qt, \
-    QRect, QDir
+    QRect, QDir, QRectF
 
 from PyQt5.QtGui import \
     QPixmap, \
@@ -70,6 +70,15 @@ class App(QMainWindow):
         self.input_url.getBody().returnPressed.connect(self.generateQrCode)
         self.input_url.setEnabled(False)
         self.qrcode = None
+        self.qrcode_ecc_w = QHBoxLayout(self)
+        self.qrcode_ecc_title = QLabel("ECC Quality")
+        self.qrcode_ecc_value = QComboBox()
+        self.qrcode_ecc_value.addItems(["LOW", "MEDIUM", "HIGH", "QUARTILE"])
+        self.qrcode_ecc_value.currentTextChanged.connect(self.updateECC)
+
+        self.qrcode_ecc_w.addWidget(self.qrcode_ecc_title)
+        self.qrcode_ecc_w.addWidget(self.qrcode_ecc_value)
+        self.ecc = QrCode.Ecc.LOW
 
         self.qrcode_size = LabelledIntField("QR size (px)")
         self.qrcode_offset_x = LabelledIntField("X-offset (px)")
@@ -101,6 +110,22 @@ class App(QMainWindow):
         self.input_url.getBody().returnPressed.connect(self.draw)
         self.rects = []
         self.initUI()
+
+    def updateECC(self, new_value: str):
+        print("IM CALLED")
+        if new_value == "LOW":
+            self.ecc = QrCode.Ecc.LOW
+        elif new_value == "MEDIUM":
+            self.ecc = QrCode.Ecc.MEDIUM
+        elif new_value == "HIGH":
+            self.ecc = QrCode.Ecc.HIGH
+        elif new_value == "QUARTILE":
+            self.ecc = QrCode.Ecc.QUARTILE
+        else:
+            QMessageBox.warning(self, "Error", f'Invalid dropdown option: "{new_value}"')
+            print("ERROR")
+        self.generateQrCode()
+        self.draw()
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
@@ -137,6 +162,7 @@ class App(QMainWindow):
         self.grid.addLayout(self.buttons, 2, 0, Qt.AlignLeft | Qt.AlignBottom)
         self.grid.addLayout(self.config_w, 1, 0, Qt.AlignLeft)
         self.grid.addLayout(self.buttons_config, 3, 0, Qt.AlignCenter)
+        self.grid.addLayout(self.qrcode_ecc_w, 0, 0, Qt.AlignLeft)
         self.show()
 
     def openFileNameDialog(self):
@@ -189,7 +215,7 @@ class App(QMainWindow):
     def generateQrCode(self):
         if not self.input_url.text():
             return
-        self.qrcode = QrCode.encode_text(self.input_url.text(), QrCode.Ecc.LOW)
+        self.qrcode = QrCode.encode_text(self.input_url.text(), self.ecc)
         self.draw()
 
     def draw(self):
@@ -204,14 +230,14 @@ class App(QMainWindow):
         qrd.setBrush(QBrush(Qt.black, Qt.SolidPattern))
         self.rects = []
 
-        x0 = int((self.qrcode_offset_x.getValue() / self.img_width) * self.preview.width())
-        y0 = int((self.qrcode_offset_y.getValue() / self.img_height) * self.preview.height())
+        x0 = (self.qrcode_offset_x.getValue() / self.img_width) * self.preview.width()
+        y0 = (self.qrcode_offset_y.getValue() / self.img_height) * self.preview.height()
 
-        d = int((self.qrcode_size.getValue() * self.preview.width()) / (self.img_width * self.qrcode.get_size()))
+        d = (self.qrcode_size.getValue() * self.preview.width()) / (self.img_width * self.qrcode.get_size())
         for x in range(self.qrcode.get_size()):
             for y in range(self.qrcode.get_size()):
                 if self.qrcode.get_module(x, y):
-                    self.rects.append(QRect(x0 + x*d, y0 + y*d, d, d))
+                    self.rects.append(QRectF(x0 + x*d, y0 + y*d, d, d))
         qrd.drawRects(self.rects)
 
     def loadConfig(self):
