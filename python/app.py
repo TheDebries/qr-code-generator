@@ -14,7 +14,7 @@ from PyQt5.QtWidgets import \
 
 from PyQt5.QtCore import \
     Qt, \
-    QRect
+    QRect, QDir
 
 from PyQt5.QtGui import \
     QPixmap, \
@@ -140,6 +140,7 @@ class App(QMainWindow):
         self.show()
 
     def openFileNameDialog(self):
+        os.makedirs("./data/templates/", exist_ok=True)
         fname, _ = QFileDialog.getOpenFileName(self, "Select base image", "./data/templates", "Image files (*.jpg *.png)")
         if not fname:
             return
@@ -176,7 +177,9 @@ class App(QMainWindow):
         if not self.input_url.text():
             msg = QMessageBox.warning(self, "No URL given", "You must first specify a URL to convert.")
             return
-        target, _ = QFileDialog.getSaveFileName(self, 'Save File', "~", '*.png')
+        target, _ = QFileDialog.getSaveFileName(self, 'Save File', QDir.homePath(), '*.png')
+        if not target:
+            return
         convert_url.to_image(self.qrcode, target, self.filename, self.qrcode_size.getValue(), self.qrcode_offset_x.getValue(), self.qrcode_offset_y.getValue())
 
     def setImageSize(self):
@@ -213,6 +216,7 @@ class App(QMainWindow):
         qrd.drawRects(self.rects)
 
     def loadConfig(self):
+        os.makedirs("./data/configs/", exist_ok=True)
         conffile, _ = QFileDialog.getOpenFileName(self, "Select configuration", "./data/configs", "Config file (*.qrconfig)")
         if not conffile:
             return
@@ -229,6 +233,7 @@ class App(QMainWindow):
         self.draw()
 
     def saveConfig(self):
+        os.makedirs("./data/configs/")
         if not self.filename:
             msg = QMessageBox.warning(self, "Invalid config", "Config file must contain path to a file")
             return
